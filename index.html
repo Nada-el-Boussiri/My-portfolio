@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nada El Boussiri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #f4f1eb;
+      --text:    #111111;
+      --muted:   #888888;
+      --border:  #d8d4cc;
+      --serif:   'Cormorant Garamond', Georgia, serif;
+      --sans:    'Syne', sans-serif;
+      --mono:    'Space Mono', monospace;
+      --ease:    cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── CURSOR ── */
+    #cur {
+      position: fixed; z-index: 9999;
+      width: 10px; height: 10px;
+      background: var(--text);
+      border-radius: 50%;
+      pointer-events: none;
+      top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      mix-blend-mode: difference;
+      transition: width .35s var(--ease), height .35s var(--ease);
+    }
+    body.cur-hover #cur  { width: 44px; height: 44px; }
+
+    /* ── LOADER ── */
+    #loader {
+      position: fixed; inset: 0; z-index: 8000;
+      background: var(--bg);
+      display: flex; align-items: flex-end;
+      padding: 44px;
+      transition: opacity .8s var(--ease), visibility .8s;
+    }
+    #loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .ld-name {
+      font-family: var(--serif);
+      font-size: clamp(36px, 6vw, 80px);
+      font-weight: 300; letter-spacing: -.02em;
+      line-height: 1; margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .ld-name span { display: block; animation: slide-up .8s .15s var(--ease) both; }
+    .ld-track { width: 100%; height: 1px; background: var(--border); position: relative; overflow: hidden; }
+    .ld-fill  { position: absolute; top: 0; left: 0; height: 100%; width: 0; background: var(--text); transition: width 1.8s var(--ease); }
+    .ld-pct   { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); margin-top: 12px; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 44px;
+    }
+    .nav-name { font-family: var(--serif); font-size: 18px; font-weight: 400; letter-spacing: .01em; }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nl {
+      font-size: 12px; font-weight: 500;
+      letter-spacing: .08em; text-transform: uppercase;
+      position: relative; overflow: hidden;
+    }
+    .nl::after {
+      content: ''; position: absolute; bottom: -1px; left: 0;
+      width: 0; height: 1px; background: var(--text);
+      transition: width .3s var(--ease);
+    }
+    .nl:hover::after { width: 100%; }
+    .nav-avail {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: .08em; color: var(--muted);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .avail-dot {
+      width: 7px; height: 7px; background: #22c55e;
+      border-radius: 50%; animation: pulse 2.2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      padding: 130px 44px 72px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .h-eyebrow {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .16em; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 28px;
+      opacity: 0; animation: fade-up .5s 2.1s var(--ease) forwards;
+    }
+    .h-tagline {
+      font-family: var(--serif);
+      font-size: clamp(38px, 6.5vw, 96px);
+      font-weight: 300; line-height: 1.04;
+      letter-spacing: -.025em;
+      max-width: 880px;
+    }
+    .hl {
+      display: block;
+      transform: translateY(108%); opacity: 0;
+      transition: transform .9s var(--ease), opacity .9s var(--ease);
+    }
+    .hl.in { transform: translateY(0); opacity: 1; }
+    .hl em { font-style: italic; }
+
+    .h-bottom {
+      margin-top: 68px;
+      display: flex; align-items: flex-end;
+      justify-content: space-between; flex-wrap: wrap; gap: 28px;
+      opacity: 0; animation: fade-up .6s 2.5s var(--ease) forwards;
+    }
+    .h-metrics { display: flex; gap: 48px; flex-wrap: wrap; }
+    .h-mv {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: clamp(26px, 3.5vw, 46px);
+      font-weight: 700; letter-spacing: -.03em; line-height: 1;
+    }
+    .h-ml {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .14em; color: var(--muted);
+      text-transform: uppercase; margin-top: 5px;
+    }
+    .h-scroll {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .14em; color: var(--muted);
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      animation: bob 3s 3s infinite;
+    }
+    @keyframes bob { 0%,100%{transform:rotate(180deg) translateY(0)} 50%{transform:rotate(180deg) translateY(-6px)} }
+    @keyframes fade-up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slide-up { from{transform:translateY(105%)} to{transform:translateY(0)} }
+
+    /* ── MARQUEE ── */
+    .marquee-wrap {
+      overflow: hidden; border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .marquee-track {
+      display: flex; width: max-content;
+      animation: scroll-x 26s linear infinite;
+    }
+    .mi {
+      font-family: var(--serif); font-style: italic;
+      font-size: clamp(13px, 1.4vw, 16px);
+      color: var(--muted); padding: 0 28px;
+      white-space: nowrap;
+    }
+    .ms { color: var(--border); }
+    @keyframes scroll-x { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* ── WORK ── */
+    #work { padding: 72px 0 0; }
+    .work-hd {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 0 44px 18px; border-bottom: 1px solid var(--border);
+    }
+    .work-lbl, .work-ct {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .15em; color: var(--muted);
+      text-transform: uppercase;
+    }
+    .proj-row {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: center; gap: 20px;
+      padding: 26px 44px;
+      border-bottom: 1px solid var(--border);
+      cursor: none; position: relative;
+      transition: background .2s;
+    }
+    .proj-row:hover { background: rgba(180, 155, 118, 0.13); }
+    .proj-row:hover .pn { letter-spacing: -.01em; }
+    .proj-row:hover .p-cta { opacity: 1; }
+    .p-num {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .1em; color: var(--muted);
+    }
+    .pn {
+      font-family: var(--serif);
+      font-size: clamp(26px, 4vw, 54px);
+      font-weight: 300; letter-spacing: -.02em;
+      line-height: 1.05; transition: letter-spacing .4s var(--ease);
+    }
+    .pn em { font-style: italic; }
+    .p-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .p-cta {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .13em; text-transform: uppercase;
+      color: var(--muted); margin-top: 8px;
+      opacity: 0; transition: opacity .25s var(--ease);
+    }
+    .sold-tag {
+      display: inline-block;
+      font-family: var(--mono); font-size: 8px;
+      letter-spacing: .12em; text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      vertical-align: middle; position: relative; top: -1px;
+    }
+    .p-meta { text-align: right; }
+    .p-type { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+    .p-client { font-size: 12px; color: var(--muted); }
+
+
+    /* ── ABOUT ── */
+    #about {
+      border-top: 1px solid var(--border);
+      padding: 96px 44px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .about-lbl {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .16em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 32px;
+    }
+    .about-txt {
+      font-family: var(--serif);
+      font-size: clamp(17px, 2.2vw, 24px);
+      font-weight: 300; line-height: 1.6; letter-spacing: -.01em;
+    }
+    .about-txt em { font-style: italic; }
+    .about-facts { display: flex; flex-direction: column; }
+    .af {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 15px 0; border-bottom: 1px solid var(--border);
+    }
+    .af-k {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .12em; color: var(--muted); text-transform: uppercase;
+    }
+    .af-v { font-size: 14px; font-weight: 500; }
+
+    /* ── EXPERIENCE ── */
+    #exp {
+      border-top: 1px solid var(--border);
+      padding: 96px 44px;
+    }
+    .exp-hd {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 48px;
+    }
+    .exp-big {
+      font-family: var(--serif);
+      font-size: clamp(32px, 5vw, 68px);
+      font-weight: 300; letter-spacing: -.025em;
+    }
+    .exp-lbl {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .15em; color: var(--muted); text-transform: uppercase;
+    }
+    .exp-list { display: flex; flex-direction: column; }
+    .ei {
+      display: grid; grid-template-columns: 130px 1fr auto;
+      gap: 24px; align-items: baseline;
+      padding: 22px 0; border-top: 1px solid var(--border);
+      transition: opacity .2s;
+    }
+    .exp-list:hover .ei { opacity: .35; }
+    .exp-list:hover .ei:hover { opacity: 1; }
+    .ei-date {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .09em; color: var(--muted);
+    }
+    .ei-co {
+      font-family: var(--serif);
+      font-size: clamp(17px, 2vw, 24px);
+      font-weight: 400; letter-spacing: -.01em;
+    }
+    .ei-role { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .ei-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .etag {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .1em; padding: 3px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted); text-transform: uppercase;
+    }
+
+    /* ── SKILLS ── */
+    #skills {
+      border-top: 1px solid var(--border);
+      padding: 96px 44px;
+      display: grid; grid-template-columns: 180px 1fr;
+      gap: 80px; align-items: start;
+    }
+    .sk-lbl {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+    }
+    .sk-groups { display: flex; flex-direction: column; gap: 40px; }
+    .sg-t {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+    }
+    .sg-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip {
+      font-size: 13px; font-weight: 500;
+      padding: 7px 15px; border: 1px solid var(--border);
+      color: var(--text); cursor: none;
+      transition: background .2s, color .2s;
+    }
+    .chip:hover { background: var(--text); color: var(--bg); }
+
+    /* ── CONTACT ── */
+    #contact {
+      border-top: 1px solid var(--border);
+      padding: 96px 44px;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .ct-pre {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .16em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 28px;
+    }
+    .ct-h {
+      font-family: var(--serif);
+      font-size: clamp(26px, 4vw, 60px);
+      font-weight: 300; letter-spacing: -.02em;
+      line-height: 1.1; margin-bottom: 52px;
+    }
+    .ct-email {
+      font-family: var(--serif);
+      font-size: clamp(18px, 3vw, 46px);
+      font-weight: 300; letter-spacing: -.02em;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 3px; display: inline-block;
+      transition: border-color .2s;
+    }
+    .ct-email:hover { border-color: var(--text); }
+    .ct-links {
+      display: flex; gap: 32px; margin-top: 40px; flex-wrap: wrap;
+      justify-content: center;
+    }
+    .ct-link {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .14em; color: var(--muted);
+      text-transform: uppercase; transition: color .2s;
+    }
+    .ct-link:hover { color: var(--text); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 22px 44px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .ft-copy {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .1em; color: var(--muted);
+    }
+    .ft-top {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .1em; color: var(--muted);
+      text-transform: uppercase; transition: color .2s;
+    }
+    .ft-top:hover { color: var(--text); }
+
+    /* ── MODAL ── */
+    .overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(244,241,235,.92);
+      backdrop-filter: blur(14px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity .4s var(--ease), visibility .4s;
+    }
+    .overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      width: 92%; max-width: 640px; max-height: 86vh;
+      overflow-y: auto; background: var(--bg);
+      border: 1px solid var(--border); padding: 48px;
+      transform: translateY(16px);
+      transition: transform .4s var(--ease);
+    }
+    .overlay.open .modal { transform: none; }
+    .modal-top { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+    .close-btn {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .1em; background: none;
+      border: 1px solid var(--border); padding: 6px 14px;
+      cursor: none; color: var(--muted); transition: all .2s;
+    }
+    .close-btn:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .m-type {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .15em; color: var(--muted);
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .m-title {
+      font-family: var(--serif);
+      font-size: clamp(22px, 3.5vw, 40px);
+      font-weight: 300; letter-spacing: -.02em;
+      line-height: 1.1; margin-bottom: 32px;
+      padding-bottom: 22px; border-bottom: 1px solid var(--border);
+    }
+    .beat { padding: 22px 0; border-bottom: 1px solid var(--border); }
+    .beat:last-child { border-bottom: none; }
+    .beat-lbl {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .beat-txt { font-size: 14px; line-height: 1.75; color: #555; }
+    .beat-txt strong { color: var(--text); font-weight: 600; }
+
+    /* ── REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity .75s var(--ease), transform .75s var(--ease); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-avail { display: none; }
+      #hero { padding: 100px 20px 56px; }
+      .work-hd, .proj-row { padding-left: 20px; padding-right: 20px; }
+      .p-meta { display: none; }
+      .p-arr { right: 20px; }
+      #about, #exp, #contact { padding: 64px 20px; }
+      #about { grid-template-columns: 1fr; gap: 36px; }
+      #skills { grid-template-columns: 1fr; gap: 32px; padding: 64px 20px; }
+      .ei { grid-template-columns: 1fr; gap: 6px; }
+      .ei-tags { justify-content: flex-start; }
+      footer { padding: 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cur"></div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div style="width:100%">
+    <div class="ld-name"><span>Nada El Boussiri</span></div>
+    <div class="ld-track"><div class="ld-fill" id="lf"></div></div>
+    <div class="ld-pct" id="lpct">0%</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-name">Nada El Boussiri</div>
+  <div class="nav-links">
+    <a class="nl" href="#work">Work</a>
+    <a class="nl" href="#about">About</a>
+    <a class="nl" href="#exp">Experience</a>
+    <a class="nl" href="#contact">Contact</a>
+    <div class="nav-avail"><div class="avail-dot"></div>Open to opportunities</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="h-eyebrow">Marketing · Marbella · 2026</div>
+  <h1 class="h-tagline">
+    <span class="hl" id="hl0">Marketing at the</span>
+    <span class="hl" id="hl1">intersection of <em>luxury,</em></span>
+    <span class="hl" id="hl2"><em>relationships,</em> and</span>
+    <span class="hl" id="hl3">digital strategy.</span>
+  </h1>
+  <div class="h-bottom">
+    <div class="h-metrics">
+      <div>
+        <div class="h-mv"><span class="counter" data-t="870">0</span></div>
+        <div class="h-ml">Outbound Calls · M21</div>
+      </div>
+      <div>
+        <div class="h-mv"><span class="counter" data-t="48">0</span></div>
+        <div class="h-ml">Pipeline Opportunities</div>
+      </div>
+      <div>
+        <div class="h-mv"><span class="counter" data-t="4">0</span></div>
+        <div class="h-ml">Deals Closed · M21</div>
+      </div>
+      <div>
+        <div class="h-mv">4.8<span style="font-size:.55em;font-weight:500">/5</span></div>
+        <div class="h-ml">Event Score · Les Roches Record</div>
+      </div>
+      <div>
+        <div class="h-mv"><span class="counter" data-t="200">0</span></div>
+        <div class="h-ml">Attendees · Cultural Night</div>
+      </div>
+    </div>
+    <div class="h-scroll">SCROLL</div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="mi">Luxury Marketing</span><span class="ms"> · </span>
+    <span class="mi">CRM Operations</span><span class="ms"> · </span>
+    <span class="mi">Client Acquisition</span><span class="ms"> · </span>
+    <span class="mi">Digital Strategy</span><span class="ms"> · </span>
+    <span class="mi">Brand Narrative</span><span class="ms"> · </span>
+    <span class="mi">Social Media Strategy</span><span class="ms"> · </span>
+    <span class="mi">Lead Qualification</span><span class="ms"> · </span>
+    <span class="mi">Content Creation</span><span class="ms"> · </span>
+    <span class="mi">Google Analytics</span><span class="ms"> · </span>
+    <span class="mi">HubSpot</span><span class="ms"> · </span>
+    <span class="mi">Luxury Marketing</span><span class="ms"> · </span>
+    <span class="mi">CRM Operations</span><span class="ms"> · </span>
+    <span class="mi">Client Acquisition</span><span class="ms"> · </span>
+    <span class="mi">Digital Strategy</span><span class="ms"> · </span>
+    <span class="mi">Brand Narrative</span><span class="ms"> · </span>
+    <span class="mi">Social Media Strategy</span><span class="ms"> · </span>
+    <span class="mi">Lead Qualification</span><span class="ms"> · </span>
+    <span class="mi">Content Creation</span><span class="ms"> · </span>
+    <span class="mi">Google Analytics</span><span class="ms"> · </span>
+    <span class="mi">HubSpot</span><span class="ms"> · </span>
+  </div>
+</div>
+
+<!-- WORK -->
+<section id="work" class="reveal">
+  <div class="work-hd">
+    <span class="work-lbl">Selected Work</span>
+    <span class="work-ct">(03)</span>
+  </div>
+  <div class="proj-row" data-pid="m21acq">
+    <div class="p-num">01</div>
+    <div>
+      <div class="pn">M21 <em>Acquisition</em></div>
+      <div class="p-sub">Client Pipeline · Real Estate</div>
+      <div class="p-cta">Click to learn more</div>
+    </div>
+    <div class="p-meta">
+      <div class="p-type">CRM · Outbound · Growth</div>
+      <div class="p-client">M21 Realty House</div>
+    </div>
+  </div>
+  <div class="proj-row" data-pid="m21insta">
+    <div class="p-num">02</div>
+    <div>
+      <div class="pn">M21 <em>Instagram</em></div>
+      <div class="p-sub">Content Strategy &nbsp;<span class="sold-tag">Live</span></div>
+      <div class="p-cta">Click to learn more</div>
+    </div>
+    <div class="p-meta">
+      <div class="p-type">Digital · Content · Brand</div>
+      <div class="p-client">M21 Realty House</div>
+    </div>
+  </div>
+  <div class="proj-row" data-pid="cultural">
+    <div class="p-num">03</div>
+    <div>
+      <div class="pn">Cultural <em>Night</em></div>
+      <div class="p-sub">Event Management</div>
+      <div class="p-cta">Click to learn more</div>
+    </div>
+    <div class="p-meta">
+      <div class="p-type">Events · Budget · Culture</div>
+      <div class="p-client">Les Roches Marbella</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ABOUT -->
+<section id="about" class="reveal">
+  <div>
+    <div class="about-lbl">About</div>
+    <p class="about-txt">
+      Master's graduate from <em>Les Roches Marbella</em> in Marketing and Management
+      for Luxury Tourism, with a Bachelor in Management from
+      <em>Toulouse Business School Barcelona</em> specialised in Digital Marketing.
+      Built a track record in luxury real estate at M21 Realty House — client acquisition,
+      CRM, and digital content in one of Europe's most competitive markets.
+    </p>
+  </div>
+  <div>
+    <div class="about-facts">
+      <div class="af"><div class="af-k">Location</div><div class="af-v">Marbella, Spain</div></div>
+      <div class="af"><div class="af-k">Education</div><div class="af-v">Les Roches · MSc 2025</div></div>
+      <div class="af"><div class="af-k">Languages</div><div class="af-v">FR · EN · AR · ES</div></div>
+      <div class="af">
+        <div class="af-k">LinkedIn</div>
+        <div class="af-v"><a href="https://linkedin.com/in/nada-el-boussiri-bb6468253" target="_blank" rel="noopener">nada-el-boussiri ↗</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="exp" class="reveal">
+  <div class="exp-hd">
+    <h2 class="exp-big">Experience</h2>
+    <span class="exp-lbl">2021 – Present</span>
+  </div>
+  <div class="exp-list">
+    <div class="ei">
+      <div class="ei-date">Jun. 2025 –<br>Present</div>
+      <div><div class="ei-co">M21 Realty House</div><div class="ei-role">Real Estate Agent · Luxury</div></div>
+      <div class="ei-tags"><span class="etag">CRM</span><span class="etag">Acquisition</span><span class="etag">Digital</span></div>
+    </div>
+    <div class="ei">
+      <div class="ei-date">2022 –<br>Present</div>
+      <div><div class="ei-co">Les Roches Marbella</div><div class="ei-role">Student Event Lead · Cultural Night</div></div>
+      <div class="ei-tags"><span class="etag">Events</span><span class="etag">Budget</span><span class="etag">Culture</span></div>
+    </div>
+    <div class="ei">
+      <div class="ei-date">2024 – 2025</div>
+      <div><div class="ei-co">Les Roches Marbella</div><div class="ei-role">MSc Marketing &amp; Management, Luxury Tourism</div></div>
+      <div class="ei-tags"><span class="etag">Luxury</span><span class="etag">Brand</span></div>
+    </div>
+    <div class="ei">
+      <div class="ei-date">2021 – 2024</div>
+      <div><div class="ei-co">Toulouse Business School</div><div class="ei-role">Bachelor in Management · Digital Marketing</div></div>
+      <div class="ei-tags"><span class="etag">Analytics</span><span class="etag">Strategy</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills" class="reveal">
+  <div><div class="sk-lbl">Skills</div></div>
+  <div class="sk-groups">
+    <div>
+      <div class="sg-t">Technical</div>
+      <div class="sg-chips">
+        <span class="chip">HubSpot</span><span class="chip">Google Analytics</span>
+        <span class="chip">Google Ads</span><span class="chip">Amazon Advertising</span>
+        <span class="chip">CRM Systems</span><span class="chip">Digital Marketing</span>
+        <span class="chip">Social Media Strategy</span>
+      </div>
+    </div>
+    <div>
+      <div class="sg-t">Operational</div>
+      <div class="sg-chips">
+        <span class="chip">Outbound Prospecting</span>
+        <span class="chip">Inbound Call Management</span>
+        <span class="chip">Lead Qualification</span>
+        <span class="chip">Content Creation</span>
+        <span class="chip">Brand Narrative</span>
+        <span class="chip">Campaign Analysis</span>
+        <span class="chip">Property Listings</span>
+      </div>
+    </div>
+    <div>
+      <div class="sg-t">Interpersonal</div>
+      <div class="sg-chips">
+        <span class="chip">HNW Client Relations</span>
+        <span class="chip">Cross-Cultural Communication</span>
+        <span class="chip">Active Listening</span>
+        <span class="chip">Discretion</span>
+        <span class="chip">Project Management</span>
+        <span class="chip">Adaptability</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="reveal">
+  <div class="ct-pre">Let's work together</div>
+  <h2 class="ct-h">Have a project or<br>opportunity in mind?</h2>
+  <a class="ct-email" href="mailto:n.elboussiri_15928@students.lesroches.es">n.elboussiri_15928@students.lesroches.es</a>
+  <div class="ct-links">
+    <a class="ct-link" href="https://linkedin.com/in/nada-el-boussiri-bb6468253" target="_blank" rel="noopener">LinkedIn ↗</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-copy">© 2026 Nada El Boussiri</div>
+  <a class="ft-top" href="#hero">Back to top ↑</a>
+</footer>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-top"><button class="close-btn" id="close-btn">Close ×</button></div>
+    <div class="m-type" id="m-type"></div>
+    <h2 class="m-title" id="m-title"></h2>
+    <div id="m-beats"></div>
+  </div>
+</div>
+
+<script>
+const BRIEFS = {
+  m21acq: {
+    type: 'Client Acquisition · M21 Realty House',
+    title: 'M21 Acquisition & Pipeline',
+    beats: [
+      { label: 'CONTEXT',  text: `Marbella's luxury property market runs on long buyer cycles. Clients research for months and expect consistent, informed contact throughout — not a pitch, a relationship. M21 operates with <strong>international buyers, high transaction values, and a reputation built on discretion.</strong>` },
+      { label: 'APPROACH', text: `<strong>870 outbound calls</strong>, each prepared with CRM research and social profiling beforehand. 92 inbound calls averaged 7 minutes — intentional: buyers at this level take time. <strong>1,556 emails sent</strong> across six months produced 48 new pipeline opportunities.` },
+      { label: 'RESULT',   text: `<strong>48 new pipeline opportunities. 4 deals closed.</strong> Pipeline built from scratch through research-led outreach. The calls that went somewhere were the ones where the work had been done beforehand — knowing the buyer's profile, timeline, and what else they were considering.` }
+    ]
+  },
+  m21insta: {
+    type: 'Digital Strategy · M21 Realty House',
+    title: 'M21 Instagram Restructuring',
+    beats: [
+      { label: 'PROBLEM',  text: `M21's Instagram was dominated by property listings — specs, floor plans, prices. <strong>International buyers planning a move to Marbella needed context, not a catalogue.</strong> They wanted to understand what living there actually looked like.` },
+      { label: 'APPROACH', text: `Shifted the content strategy from listing-led to lifestyle-led: local life, neighbourhood culture, the character of the market. Built a brand narrative around <strong>the place rather than the product</strong>, meeting buyers where their heads already were.` },
+      { label: 'RESULT',   text: `<strong>Save rates increased. Direct message inquiries went up.</strong> People engaging rather than scrolling past. The account became a prospecting tool rather than a listings board — and the pipeline reflected it.` }
+    ]
+  },
+  cultural: {
+    type: 'Event Management · Les Roches Marbella',
+    title: 'International Cultural Night',
+    beats: [
+      { label: 'BRIEF',     text: `Organise the annual International Cultural Night at Les Roches Marbella: <strong>a CHF 2,000 budget, a team of 8 students, and 80+ nationalities on campus</strong> to draw from. Represent Morocco and the MENA region as campus cultural delegate.` },
+      { label: 'EXECUTION', text: `Led logistics, vendor coordination, budget management, and all communications end-to-end. Every line item tracked, every vendor confirmed, every moving part accounted for before the doors opened.` },
+      { label: 'RESULT',    text: `<strong>200 attendees. 4.8 / 5 post-event score — the highest the school had ever recorded.</strong> The following year's organising team used our planning documents as their starting point.` }
+    ]
+  }
+};
+
+/* LOADER */
+(function() {
+  const fill = document.getElementById('lf');
+  const pct  = document.getElementById('lpct');
+  const ldr  = document.getElementById('loader');
+  let v = 0;
+  const iv = setInterval(() => {
+    v = Math.min(v + Math.random() * 14, 100);
+    fill.style.width = v + '%';
+    pct.textContent = Math.floor(v) + '%';
+    if (v >= 100) {
+      clearInterval(iv);
+      setTimeout(() => {
+        ldr.classList.add('done');
+        revealHero();
+        runCounters();
+      }, 260);
+    }
+  }, 75);
+})();
+
+/* HERO */
+function revealHero() {
+  ['hl0','hl1','hl2','hl3'].forEach((id, i) =>
+    setTimeout(() => document.getElementById(id)?.classList.add('in'), i * 100)
+  );
+}
+
+/* COUNTERS */
+function runCounters() {
+  document.querySelectorAll('.counter').forEach(el => {
+    const t = +el.dataset.t, s = el.dataset.s || '', dur = 1100, t0 = performance.now();
+    const tick = now => {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * t) + s;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+/* CURSOR */
+const cur = document.getElementById('cur');
+let cx = -100, cy = -100;
+document.addEventListener('mousemove', e => {
+  cx = e.clientX; cy = e.clientY;
+  cur.style.left = cx + 'px'; cur.style.top = cy + 'px';
+});
+document.querySelectorAll('a, button, .chip').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('cur-hover'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('cur-hover'));
+});
+
+document.querySelectorAll('.proj-row').forEach(row => {
+  row.addEventListener('click', () => openModal(row.dataset.pid));
+});
+
+/* MODAL */
+const overlay = document.getElementById('overlay');
+function openModal(pid) {
+  const d = BRIEFS[pid]; if (!d) return;
+  document.getElementById('m-type').textContent = d.type;
+  document.getElementById('m-title').textContent = d.title;
+  document.getElementById('m-beats').innerHTML = d.beats.map(b =>
+    `<div class="beat"><div class="beat-lbl">${b.label}</div><div class="beat-txt">${b.text}</div></div>`
+  ).join('');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+document.getElementById('close-btn').addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* SCROLL REVEAL */
+const io = new IntersectionObserver(entries =>
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } })
+, { threshold: 0.07 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
